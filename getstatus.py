@@ -5,7 +5,7 @@ import datetime
 import os
 import sys
 from pymodbus.exceptions import ModbusIOException
-from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+from pymodbus.client import ModbusSerialClient as ModbusClient
 from influxdb import InfluxDBClient
 
 influxhost = "127.0.0.1"
@@ -51,23 +51,23 @@ def merge(*dict_args):
     return result
 
 class Growatt:
-    def __init__(self, client, name, unit):
+    def __init__(self, client, name, slave):
         self.client = client
         self.name = name
-        self.unit = unit
+        self.slave = slave
 
-        row = self.client.read_holding_registers(73, unit=self.unit)
+        row = self.client.read_holding_registers(73, slave=self.slave)
         if type(row) is ModbusIOException:
             if gwverbose: print("GWVERBOSE1",row)
             raise row
         self.modbusVersion = row.registers[0]
 
     def read(self):
-        row = self.client.read_input_registers(0, 83, unit=self.unit)
+        row = self.client.read_input_registers(0, 83, slave=self.slave)
         if gwverbose: print("GWVERBOSE2")
         if gwverbose: print("GWVERBOSE3")
         info = {                                    # ==================================================================
-            "Module": unit,
+            "Module": slave,
             "StatusCode": row.registers[0],         # N/A,      Inverter Status,    Inverter run state
             "Status": StatusCodes[row.registers[0]],
             "Vpv1": float(row.registers[1]) / 10,               # 0.1V,     PV1 voltage
@@ -193,11 +193,11 @@ for i in range(numinverters):
   #it should be 1 for gw1, 2 for gw2, etc..etc  be sure to set any addressable things on the bus
   #to a different unit number
   #it looks like growatt it 
-  unit=i+1
-  name = "Growatt"+str(unit)
-  measurement=influxmeasurement+str(unit)
-  print("Name ",name," unit is ",unit," measurement is ",measurement)
-  growatt = Growatt(client, name, unit)
+  slave= i + 1
+  name = "Growatt"+str(slave)
+  measurement=influxmeasurement+str(slave)
+  print("Name ", name," slave is ", slave, " measurement is ", measurement)
+  growatt = Growatt(client, name, slave)
   inverters.append({
     'growatt': growatt,
     'measurement': measurement
