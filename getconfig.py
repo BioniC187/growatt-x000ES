@@ -40,7 +40,7 @@ class Growatt:
         self.name = name
         self.slave = slave
 
-        row = self.client.read_holding_registers(73, unit=self.slave)
+        row = self.client.read_holding_registers(73, slave=self.slave)
         if type(row) is ModbusIOException:
             if verbose: print("CHECK1",row)
             raise row
